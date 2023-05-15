@@ -7,6 +7,7 @@ import moment from "moment";
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import GoogleIcon from '@mui/icons-material/Google';
 import FacebookIcon from '@mui/icons-material/Facebook';
+import GithubIcon from '@mui/icons-material/GitHub';
 
 import {
   Box,
@@ -25,7 +26,7 @@ import * as yup from "yup";
 import dayjs from "dayjs";
 import { useNavigate } from "react-router-dom";
 import {auth} from './config';
-import { signInWithPopup ,GoogleAuthProvider , FacebookAuthProvider } from "firebase/auth";
+import { signInWithPopup ,GoogleAuthProvider , FacebookAuthProvider , GithubAuthProvider} from "firebase/auth";
   
 
 const validationSchema = yup.object({
@@ -132,7 +133,41 @@ function Login() {
     signInWithPopup(auth,provider).then((data)=>{
         const userdata={
           userEmail:data.user.email,
-          googleId:data.user.uid,
+          facebookId:data.user.uid,
+          name:data.user.displayName
+        }
+        // setvalue(data.user)
+      axios.post('http://localhost:3000/api/auth/login', userdata)
+      .then((res)=>{
+        console.log(res)
+        if(res){
+          navigate('/dashborad')
+          enqueueSnackbar(
+            res.data.message,
+            { variant: "success" },
+            { autoHideDuration: 1000 }
+          );
+          }
+          })
+          .catch((error) => {
+            if (error.response.status === 400) {
+              enqueueSnackbar(
+                error.response.data.message,
+                { variant: "error" },
+                { autoHideDuration: 1000 }
+              );
+            }
+          });
+    })
+  }
+
+  const handleclickgithub = async() => {
+    const provider = new GithubAuthProvider();
+    signInWithPopup(auth,provider).then((data)=>{
+      console.log(data);
+        const userdata={
+          userEmail:data.user.email,
+          githubId:data.user.uid,
           name:data.user.displayName
         }
         // setvalue(data.user)
@@ -224,6 +259,9 @@ function Login() {
             </Grid>
             <Grid xs={6}>
             <Button style={{border:"1px solid black", padding:"0 8px", marginTop:5}} onClick={handleclickfacebook} ><FacebookIcon /><p style={{paddingLeft:9}}> Sign in with Facebook</p></Button>
+            </Grid>
+            <Grid xs={6}>
+            <Button style={{border:"1px solid black", padding:"0 8px", marginTop:5}} onClick={handleclickgithub} ><GithubIcon /><p style={{paddingLeft:9}}> Sign in with Github</p></Button>
             </Grid>
           </Typography>
         </div>
