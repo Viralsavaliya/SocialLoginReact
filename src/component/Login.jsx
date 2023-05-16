@@ -57,6 +57,8 @@ function Login() {
         // console.log(res,"res")
         if ( res) {
           console.log("login Successfully");
+          console.log(res,'res');
+          localStorage.setItem('token',"Breaer" + " " + res.data.data);
           enqueueSnackbar(
             res.data.message,
             { variant: "success" },
@@ -100,15 +102,16 @@ function Login() {
   const handleclick = async() => {
     const provider = new GoogleAuthProvider(); 
     signInWithPopup(auth,provider).then((data)=>{
-        const userdata={
-          userEmail:data.user.email,
-          googleId:data.user.uid,
-          name:data.user.displayName
-        }
-        // setvalue(data.user)
+      const userdata={
+        userEmail:data.user.email,
+        googleId:data.user.uid,
+        name:data.user.displayName
+      }
+      // setvalue(data.user)
       axios.post('http://localhost:3000/api/auth/login', userdata)
       .then((res)=>{
         console.log(res)
+        localStorage.setItem('token',"Breaer" + " " + res.data.data);
         if(res){
           navigate('/dashborad')
           enqueueSnackbar(
@@ -177,9 +180,11 @@ function Login() {
         // setvalue(data.user)
       axios.post('http://localhost:3000/api/auth/login', userdata)
       .then((res)=>{
-        console.log(res)
+        // localStorage.setItem('token', token);
+        console.log(res,'res')
         if(res){
           navigate('/dashborad')
+          localStorage.setItem('token',"Breaer" + " " + res.data.data);
           enqueueSnackbar(
             res.data.message,
             { variant: "success" },
@@ -212,6 +217,7 @@ function Login() {
       axios.post('http://localhost:3000/api/auth/login', userdata)
       .then((res)=>{
         console.log(res)
+
         if(res){
           navigate('/dashborad')
           enqueueSnackbar(

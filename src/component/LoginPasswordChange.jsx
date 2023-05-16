@@ -20,10 +20,6 @@ import { signInWithPopup ,GoogleAuthProvider , FacebookAuthProvider , GithubAuth
   
 
 const validationSchema = yup.object({
-    email: yup
-    .string("Enter Your email")
-    .email("Email is Required")   
-    .required("Email is Required"),
     password: yup
     .string("Enter Your password")
     .min(2, "Min length")
@@ -40,10 +36,12 @@ function LoginpasswordChange() {
 
   const { mutateAsync: cratestate } = useMutation(async (value) => {
     console.log("value",value);
+    const token = localStorage.getItem('token');
+    console.log(localStorage.getItem('token'))
+    axios.defaults.headers.common['Authorization'] = ` ${token}`;
     await axios
       .put(`http://localhost:3000/api/auth/password`, value)
       .then((res) => {
-        // console.log(res,"res")
         if ( res) {
           console.log("login Successfully");
           enqueueSnackbar(
@@ -51,7 +49,7 @@ function LoginpasswordChange() {
             { variant: "success" },
             { autoHideDuration: 1000 }
           );
-          navigate('/dashborad')
+          navigate('/signin')
         }
       })
       .catch((error) => {
@@ -68,13 +66,11 @@ function LoginpasswordChange() {
 
   const formik = useFormik({
     initialValues: {
-     email: "",
       password: "",
     },
     validationSchema: validationSchema,
     onSubmit: async (values) => {
         await cratestate({
-          email: values.email,
           password: values.password,
         });
      
@@ -103,18 +99,6 @@ function LoginpasswordChange() {
                 alignItems="center"
                 justifyContent="center"
               >
-                <Grid xs={6} mb={1}>
-                  <TextField
-                    fullWidth
-                    id="email"
-                    name="email"
-                    label="Email"
-                    value={formik.values.email || blog.email}
-                    onChange={handleChange}
-                    error={formik.touched.email && Boolean(formik.errors.email)}
-                    helperText={formik.touched.email && formik.errors.email}
-                  />
-                </Grid>
                 <Grid xs={6} mb={1}>
                   <TextField
                     fullWidth
