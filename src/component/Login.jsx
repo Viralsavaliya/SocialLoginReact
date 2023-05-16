@@ -163,7 +163,10 @@ function Login() {
   }
 
   const handleclickgithub = async() => {
+    console.log("github");
     const provider = new GithubAuthProvider();
+    console.log("github11");
+    
     signInWithPopup(auth,provider).then((data)=>{
       console.log(data);
         const userdata={
