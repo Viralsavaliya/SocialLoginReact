@@ -1,33 +1,12 @@
-import { DemoContainer } from "@mui/x-date-pickers/internals/demo";
-import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import moment from "moment";
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 
 import {
   Box,
   Button,
-  Checkbox,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
-  FormControlLabel,
   Grid,
-  InputLabel,
-  MenuItem,
-  Select,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TablePagination,
-  TableRow,
+  SvgIcon,
   TextField,
   Typography,
 } from "@mui/material";
-
 import axios from "axios";
 import { useFormik } from "formik";
 import { enqueueSnackbar } from "notistack";
@@ -35,14 +14,12 @@ import React, { useEffect, useState } from "react";
 import { useMutation } from "react-query";
 import * as yup from "yup";
 import dayjs from "dayjs";
-import {  useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import {auth} from './config';
+import { signInWithPopup ,GoogleAuthProvider , FacebookAuthProvider , GithubAuthProvider , TwitterAuthProvider} from "firebase/auth";
+  
 
 const validationSchema = yup.object({
-  userName: yup
-    .string("Enter Your Name")
-    .min(2, "Min length")
-    .max(50, "Max length")
-    .required("Username is Required"),
     email: yup
     .string("Enter Your email")
     .email("Email is Required")   
@@ -54,41 +31,34 @@ const validationSchema = yup.object({
     .required("password is Required"),
 });
 
-function User() {
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
+function LoginpasswordChange() {
+
   const [blog, setblog] = useState([]);
-  const [category, setcategory] = useState([]);
-  const [update, setupdate] = useState();
-  const [totalrecord, settotalrecord] = useState("");
-  const [open, setOpen] = useState(false);
-  const [data, setdata] = useState("");
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+
   const [value, setValue] = useState(Date.now());
-  const [con, setcon] = useState();
   const navigate = useNavigate();
 
   const { mutateAsync: cratestate } = useMutation(async (value) => {
-    console.log("value");
+    console.log("value",value);
     await axios
-      .post(`http://localhost:3000/api/auth/register`, value)
+      .put(`http://localhost:3000/api/auth/password`, value)
       .then((res) => {
-        if ({ res: true }) {
-          console.log("blog create Successfully");
+        // console.log(res,"res")
+        if ( res) {
+          console.log("login Successfully");
           enqueueSnackbar(
-           res.data.message,
+            res.data.message,
             { variant: "success" },
             { autoHideDuration: 1000 }
           );
-          navigate('/signin')
+          navigate('/dashborad')
         }
       })
       .catch((error) => {
-        console.log(error)
-        if (error) {
+        if (error.response.status === 400) {
           console.log("axios error");
           enqueueSnackbar(
-          error.response.data.message,
+            error.response.data.message,
             { variant: "error" },
             { autoHideDuration: 1000 }
           );
@@ -96,37 +66,33 @@ function User() {
       });
   });
 
-
   const formik = useFormik({
     initialValues: {
-      userName: "",
-      email: "",
+     email: "",
       password: "",
-      date: Date.now(),
     },
     validationSchema: validationSchema,
     onSubmit: async (values) => {
-        console.log("dsdsdsds")
         await cratestate({
-          userName: values.userName,
           email: values.email,
           password: values.password,
-          date: value,
         });
+     
     },
   });
   const { handleChange, handleSubmit } = formik;
 
- 
-  const handleChangedrop = (data) => {
-    console.log("datavalue", data);
-    setdata(data);
-  };
+
+
+
+
+
+
 
   return (
     <div>
       <div style={{ textAlign: "center", width: "100%" }}>
-        <h1>Register</h1>
+        <h1>Social login </h1>
         <div>
           <Typography sx={{ p: 2 }}>
             <form onSubmit={handleSubmit}>
@@ -136,31 +102,14 @@ function User() {
                 spacing={0}
                 alignItems="center"
                 justifyContent="center"
-                
               >
-                <Grid xs={6} mb={1}>
-                  <TextField
-                    fullWidth
-                    id="userName"
-                    name="userName"
-                    label="UserName"
-                    value={formik.values.userName || blog.userName}
-                    onChange={handleChange}
-                    error={
-                      formik.touched.userName && Boolean(formik.errors.userName)
-                    }
-                    helperText={
-                      formik.touched.userName && formik.errors.userName
-                    }
-                  />
-                </Grid>
                 <Grid xs={6} mb={1}>
                   <TextField
                     fullWidth
                     id="email"
                     name="email"
                     label="Email"
-                    value={formik.values.email || blog.email }
+                    value={formik.values.email || blog.email}
                     onChange={handleChange}
                     error={formik.touched.email && Boolean(formik.errors.email)}
                     helperText={formik.touched.email && formik.errors.email}
@@ -184,20 +133,6 @@ function User() {
                   />
                 </Grid>
 
-                <Grid xs={6} mb={1} >
-                  <LocalizationProvider  dateAdapter={AdapterDayjs}
-                  > 
-                    <DemoContainer  components={["DatePicker", "DatePicker"]}>
-                      <DatePicker
-                        label="Birth Date"
-                        sx={{ width: "100%" }}
-                        value={(moment(value , "date"))}
-                        onChange={(newValue) => {setValue(newValue)}}
-                      />
-                    </DemoContainer>
-                  </LocalizationProvider>
-                </Grid>
-
                 <Grid xs={6}>
                   <Button
                     type="submit"
@@ -205,19 +140,17 @@ function User() {
                     variant="contained"
                     fullWidth
                   >
-                    Register
+                    Add Password
                   </Button>
                 </Grid>
               </Grid>
             </form>
+           
           </Typography>
         </div>
       </div>
-
-
     </div>
   );
 }
 
-export default User;
-
+export default LoginpasswordChange
