@@ -1,8 +1,5 @@
-import { DemoContainer } from "@mui/x-date-pickers/internals/demo";
-import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import moment from "moment";
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+
+import FormControlLabel from '@mui/material/FormControlLabel';
 
 import {
   Box,
@@ -13,17 +10,10 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
-  FormControlLabel,
   Grid,
-  InputLabel,
-  MenuItem,
-  Select,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TablePagination,
-  TableRow,
+  Radio,
+  RadioGroup,
+
   TextField,
   Typography,
 } from "@mui/material";
@@ -35,60 +25,102 @@ import React, { useEffect, useState } from "react";
 import { useMutation } from "react-query";
 import * as yup from "yup";
 import dayjs from "dayjs";
-import {  useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { convertLength } from '@mui/material/styles/cssUtils';
 
 const validationSchema = yup.object({
   userName: yup
     .string("Enter Your Name")
     .min(2, "Min length")
-    .max(50, "Max length")
-    .required("Username is Required"),
-    email: yup
-    .string("Enter Your email")
-    .email("Email is Required")   
-    .required("Email is Required"),
-    password: yup
+    .max(50, "Max length"),
+  password: yup
     .string("Enter Your password")
     .min(2, "Min length")
     .max(50, "Max length")
-    .required("password is Required"),
 });
 
 function Profile() {
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
   const [blog, setblog] = useState([]);
-  const [category, setcategory] = useState([]);
-  const [update, setupdate] = useState();
-  const [totalrecord, settotalrecord] = useState("");
-  const [open, setOpen] = useState(false);
   const [data, setdata] = useState("");
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [user, setuser] = useState("");
+  const [update, setupdate] = useState();
+  const [open, setOpen] = useState(false);
   const [value, setValue] = useState(Date.now());
-  const [con, setcon] = useState();
   const navigate = useNavigate();
+  const [selectedValue, setSelectedValue] = useState('');
+  const [image, setimage] = useState("");
+  const token = localStorage.getItem('token');
+  axios.defaults.headers.common['Authorization'] = ` ${token}`;
 
-  const { mutateAsync: cratestate } = useMutation(async (value) => {
-    console.log("value");
+
+
+
+  const handleClickOpen = () => {
+    setOpen(true);
+    setFieldValue("userName", user.userName);
+    setFieldValue("age", user.age);
+    setFieldValue("mobileNo", user.mobileNo);
+    setSelectedValue(user.gender);
+  };
+  const handleClose = () => {
+    setOpen(false);
+    setupdate();
+  };
+
+  const uploadfile = (e) => {
+    let file = e.target.files[0];
+    const formData = new FormData();
+    formData.append("file", file);
+
+    axios
+      .post(`http://localhost:3000/api/upload-image`, formData)
+      .then((res) => {
+        setimage(res.data.data);
+        // return setvalue(res.data);
+      });
+  };
+
+
+
+  const getusers = () => {
+    axios.get('http://localhost:3000/api/profile')
+      .then((res) => {
+        setuser(res.data.data);
+      })
+
+  };
+
+  useEffect(() => {
+    getusers();
+  }, []);
+
+
+
+
+
+  const { mutateAsync: updatestate } = useMutation(async (value) => {
+
     await axios
-      .post(`http://localhost:3000/api/auth/register`, value)
+      .put(`http://localhost:3000/api/update-profile`, value)
       .then((res) => {
         if ({ res: true }) {
-          console.log("blog create Successfully");
           enqueueSnackbar(
-           res.data.message,
+            "update user Successfully",
             { variant: "success" },
             { autoHideDuration: 1000 }
           );
-          navigate('/signin')
+          handleClose();
+          setupdate();
+          getusers();
+
         }
       })
       .catch((error) => {
-        console.log(error)
-        if (error) {
+        if (error.response.status === 422) {
           console.log("axios error");
           enqueueSnackbar(
-          error.response.data.message,
+            "This state already added",
             { variant: "error" },
             { autoHideDuration: 1000 }
           );
@@ -99,118 +131,167 @@ function Profile() {
 
   const formik = useFormik({
     initialValues: {
+      image: "",
       userName: "",
-      email: "",
-      password: "",
-      date: Date.now(),
+      age: "",
+      mobileNo: "",
+      gender: ""
     },
     validationSchema: validationSchema,
     onSubmit: async (values) => {
-        console.log("dsdsdsds")
-        await cratestate({
-          userName: values.userName,
-          email: values.email,
-          password: values.password,
-          date: value,
-        });
+      await updatestate({
+        image: image,
+        userName: values.userName,
+        age: values.age,
+        mobileNo: values.mobileNo,
+        gender: selectedValue
+      });
     },
   });
-  const { handleChange, handleSubmit } = formik;
+  const { handleChange, handleSubmit, setFieldValue } = formik;
 
- 
-  const handleChangedrop = (data) => {
-    console.log("datavalue", data);
-    setdata(data);
-  };
+
+
 
   return (
     <div>
       <div style={{ textAlign: "center", width: "100%" }}>
+        <div>Image:               
+          <img
+          src={"http://localhost:3000/" + user.image}
+          height="70px"
+          alt=""
+          srcset=""
+        /></div>
+        <div>UserName:{user.userName}</div>
+        <div>Email:{user.email}</div>
+        <div>Gender:{user.gender}</div>
+        <div>MobileNo:{user.mobileNo}</div>
+        <div>Age:{user.age}</div>
         <h1>Profile</h1>
         <div>
-          <Typography sx={{ p: 2 }}>
-            <form onSubmit={handleSubmit}>
-              <Grid
-                container
-                columns={11}
-                spacing={0}
-                alignItems="center"
-                justifyContent="center"
-                
-              >
-                <Grid xs={6} mb={1}>
-                  <TextField
-                    fullWidth
-                    id="userName"
-                    name="userName"
-                    label="UserName"
-                    value={formik.values.userName || blog.userName}
-                    onChange={handleChange}
-                    error={
-                      formik.touched.userName && Boolean(formik.errors.userName)
-                    }
-                    helperText={
-                      formik.touched.userName && formik.errors.userName
-                    }
-                  />
-                </Grid>
-                <Grid xs={6} mb={1}>
-                  <TextField
-                    fullWidth
-                    id="email"
-                    name="email"
-                    label="Email"
-                    value={formik.values.email || blog.email }
-                    onChange={handleChange}
-                    error={formik.touched.email && Boolean(formik.errors.email)}
-                    helperText={formik.touched.email && formik.errors.email}
-                  />
-                </Grid>
-                <Grid xs={6} mb={1}>
-                  <TextField
-                    fullWidth
-                    id="password"
-                    name="password"
-                    label="Password"
-                    type="password"
-                    value={formik.values.password || blog.password}
-                    onChange={handleChange}
-                    error={
-                      formik.touched.password && Boolean(formik.errors.password)
-                    }
-                    helperText={
-                      formik.touched.password && formik.errors.password
-                    }
-                  />
-                </Grid>
+          <div>
+            <Button
+              style={{
+                backgroundColor: "#1876d2",
+                color: "#fdfdfe",
+                // margin: "5px 0 5px 80%",
+              }}
+              variant="outlined"
+              onClick={handleClickOpen}
+            >
+              Update Profile
+            </Button>
+            <Dialog
+              open={open}
+              onClose={handleClose}
+              aria-labelledby="alert-dialog-title"
+              aria-describedby="alert-dialog-description"
+            >
+              <DialogTitle id="alert-dialog-title">Update Profile</DialogTitle>
+              <DialogContent>
+                <Typography sx={{ p: 2 }}>
+                  <form onSubmit={handleSubmit}>
+                    <Grid
+                      container
+                      columns={11}
+                      spacing={0}
+                      alignItems="center"
+                      justifyContent="center"
 
-                <Grid xs={6} mb={1} >
-                  <LocalizationProvider  dateAdapter={AdapterDayjs}
-                  > 
-                    <DemoContainer  components={["DatePicker", "DatePicker"]}>
-                      <DatePicker
-                        label="Birth Date"
-                        sx={{ width: "100%" }}
-                        value={(moment(value , "date"))}
-                        onChange={(newValue) => {setValue(newValue)}}
-                      />
-                    </DemoContainer>
-                  </LocalizationProvider>
-                </Grid>
+                    >
+                      <Grid xs={6} mb={1}>
+                        <TextField
+                          fullWidth
+                          id="image"
+                          name="image"
+                          type="File"
+                          accept="*/image"
+                          onChange={(e) => uploadfile(e)}
+                          error={
+                            formik.touched.image && Boolean(formik.errors.image)
+                          }
+                          helperText={formik.touched.image && formik.errors.image}
+                        />
+                      </Grid>
 
-                <Grid xs={6}>
-                  <Button
-                    type="submit"
-                    color="primary"
-                    variant="contained"
-                    fullWidth
-                  >
-                    Register
-                  </Button>
-                </Grid>
-              </Grid>
-            </form>
-          </Typography>
+                      <Grid xs={6} mb={1}>
+                        <TextField
+                          fullWidth
+                          id="userName"
+                          name="userName"
+                          label="UserName"
+                          value={formik.values.userName || blog.userName}
+                          onChange={handleChange}
+                          error={
+                            formik.touched.userName && Boolean(formik.errors.userName)
+                          }
+                          helperText={
+                            formik.touched.userName && formik.errors.userName
+                          }
+                        />
+                      </Grid>
+                      <Grid xs={6} mb={1}>
+                        <TextField
+                          fullWidth
+                          id="age"
+                          name="age"
+                          label="Age"
+                          value={formik.values.age || blog.age}
+                          onChange={handleChange}
+                          error={formik.touched.age && Boolean(formik.errors.age)}
+                          helperText={formik.touched.age && formik.errors.age}
+                        />
+                      </Grid>
+                      <Grid xs={6} mb={1} >
+                        <TextField
+                          fullWidth
+                          id="mobileNo"
+                          name="mobileNo"
+                          label="MobileNo"
+                          value={formik.values.mobileNo || blog.mobileNo}
+                          onChange={handleChange}
+                          error={
+                            formik.touched.mobileNo && Boolean(formik.errors.mobileNo)
+                          }
+                          helperText={
+                            formik.touched.mobileNo && formik.errors.mobileNo
+                          }
+                        />
+                      </Grid>
+                      <Grid xs={6}>
+                        Gender :
+                        <RadioGroup
+                          aria-labelledby="demo-radio-buttons-group-label"
+                          value={selectedValue}
+                          onChange={(event) => {
+                            setSelectedValue(event.target.value);
+                          }}
+                          name="radio-buttons-group"
+                        >
+                          <FormControlLabel value="female" control={<Radio />} label="Female" />
+                          <FormControlLabel value="male" control={<Radio />} label="Male" />
+                          <FormControlLabel value="other" control={<Radio />} label="Other" />
+                        </RadioGroup>
+                      </Grid>
+
+
+                      <Grid xs={6}>
+                        <Button
+                          type="submit"
+                          color="primary"
+                          variant="contained"
+                          fullWidth
+                        >
+                          Register
+                        </Button>
+                      </Grid>
+                    </Grid>
+                  </form>
+                </Typography>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
       </div>
 
