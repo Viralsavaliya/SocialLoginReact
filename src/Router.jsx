@@ -8,8 +8,8 @@ import User from './component/User';
 
 const routes = [
 
+  { path: '/signup', element: <User /> },
     { path: '/signin', element: <Login /> },
-    { path: '/signup', element: <User /> },
     { path: '/dashborad', element: <Dashborad /> },
     { path: '/password', element: <LoginpasswordChange /> },
     { path: '/google', element: <Google /> },
